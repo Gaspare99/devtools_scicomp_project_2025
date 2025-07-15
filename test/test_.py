@@ -49,11 +49,19 @@ def test_instance_KNN():
         kNN(-1)
     with pytest.raises(TypeError):
         kNN("String Argument")
+
+    with pytest.raises(ValueError):
+        kNN(1, backend="Random name")
     
     knn = kNN(3)
     assert knn.k == 3
 
     assert isinstance(knn, kNN)  
+
+    knn2 = kNN(3, backend='plain')
+    assert knn2.backend == 'plain'
+    knn3 = kNN(3, backend='numpy')
+    assert knn3.backend == 'numpy'
 
 
 

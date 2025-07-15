@@ -1,4 +1,7 @@
 from . import utils
+from line_profiler import profile
+import numpy as np
+from pyclassify.numba_distance_module import distance_numba
 
 class kNN:
     """
@@ -10,7 +13,7 @@ class kNN:
     Source Wikipedia 
     https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
     """
-    def __init__(self, k: int):
+    def __init__(self, k: int, backend: str = 'plain'):
         """
         Class initializer. 
 
@@ -22,8 +25,21 @@ class kNN:
         if k <= 0:
             raise ValueError("k must be greater than 0")
         
+        if backend != 'plain' and backend != 'numpy' and backend != 'numba':
+            raise ValueError("backend should be either plain, numpy or numba")
+        
         self.k = k
+        self.backend = backend
+        #self.distance = utils.distance if backend == 'plain' else utils.distance_numpy
+        if backend == 'plain':
+            self.distance = utils.distance
+        elif backend == 'numpy':
+            self.distance = utils.distance_numpy
+        else:
+            self.distance = distance_numba
 
+ 
+    @profile
     def _get_k_nearest_neighbors(self, X: list[list[float]], y: list[int], x:  list[float])->list[int]:
         """
         Computes the class labels of the k nearest neighboors.
@@ -37,12 +53,13 @@ class kNN:
             - list[int]: A list of class labels corresponding to the k-nearest neighbors.
         """
 
-        distances = [(utils.distance(x, x_data), y_data) for x_data, y_data in zip(X, y)]
+        distances = [(self.distance(x, x_data), y_data) for x_data, y_data in zip(X, y)]
         distances.sort(key=lambda x: x[0])
         neighbors = distances[:self.k]
         neighbors=[i for _ , i in neighbors]
         return neighbors
     
+    @profile
     def __call__(self, data: tuple[list[list[float]], list[int]], new_points: list[list[float]])-> list[int]:
         """
         Computes the class labels to which the new_points most likely belonging to, proving a certain data set.
@@ -57,9 +74,15 @@ class kNN:
         - list[int]: class labels to which the new_points most likely belonging to.
                  
         """
+
+        X, y = data
+        
+        if self.backend != 'plain':
+            X, y, new_points = np.array(X), np.array(y), np.array(new_points)
+
         classified_vector = []
         for point in new_points:
-            neighbors = self._get_k_nearest_neighbors(data[0], data[1], point)
+            neighbors = self._get_k_nearest_neighbors(X, y, point)
             point_class = utils.majority_vote(neighbors)
             classified_vector.append(point_class)
 

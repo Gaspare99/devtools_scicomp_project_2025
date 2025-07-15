@@ -1,0 +1,3 @@
+k: 5
+beckend: numba
+dataset: ./data/spambase.data

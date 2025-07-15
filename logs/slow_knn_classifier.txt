@@ -1,0 +1,169 @@
+Timer unit: 1e-06 s
+
+Total time: 0.224529 s
+File: /home/gaspare/Desktop/PhD/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: _get_k_nearest_neighbors at line 34
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    34                                               @profile
+    35                                               def _get_k_nearest_neighbors(self, X: list[list[float]], y: list[int], x:  list[float])->list[int]:
+    36                                                   """
+    37                                                   Computes the class labels of the k nearest neighboors.
+    38                                           
+    39                                                   Args:
+    40                                                       - X (list[list[float]]): Training DataSets (points). List of the coordinates of the points used for training
+    41                                                       - y (list[int]): Training DataSets (class labes). Class label that corrispond to the point of the training DataSet
+    42                                                       - x (list[float]): New point to be classsified.
+    43                                           
+    44                                                   Returns:
+    45                                                       - list[int]: A list of class labels corresponding to the k-nearest neighbors.
+    46                                                   """
+    47                                           
+    48       281     220078.7    783.2     98.0          distances = [(self.distance(x, x_data), y_data) for x_data, y_data in zip(X, y)]
+    49       281       4040.2     14.4      1.8          distances.sort(key=lambda x: x[0])
+    50       281         92.0      0.3      0.0          neighbors = distances[:self.k]
+    51       281        276.3      1.0      0.1          neighbors=[i for _ , i in neighbors]
+    52       281         42.0      0.1      0.0          return neighbors
+
+Total time: 0.228271 s
+File: /home/gaspare/Desktop/PhD/devtools_scicomp_project_2025/src/pyclassify/classifier.py
+Function: __call__ at line 54
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    54                                               @profile
+    55                                               def __call__(self, data: tuple[list[list[float]], list[int]], new_points: list[list[float]])-> list[int]:
+    56                                                   """
+    57                                                   Computes the class labels to which the new_points most likely belonging to, proving a certain data set.
+    58                                           
+    59                                                    Args:
+    60                                                   - data (tuple[list[list[float]], list[int]]):
+    61                                                       - X (list[list[float]]): First entry of the tuple. List of training data points .
+    62                                                       - y (list[int]): Second argument. A list of class labels corresponding to the training data.
+    63                                                   - new_points (list[list[float]]): Point to classify.
+    64                                                   
+    65                                                   Returns:
+    66                                                   - list[int]: class labels to which the new_points most likely belonging to.
+    67                                                            
+    68                                                   """
+    69                                           
+    70         1          1.7      1.7      0.0          X, y = data
+    71                                                   
+    72         1          1.1      1.1      0.0          if self.backend == 'numpy':
+    73                                                       X, y, new_points = np.array(X), np.array(y), np.array(new_points)
+    74                                           
+    75         1          0.5      0.5      0.0          classified_vector = []
+    76       282         42.6      0.2      0.0          for point in new_points:
+    77       281     225608.2    802.9     98.8              neighbors = self._get_k_nearest_neighbors(X, y, point)
+    78       281       2538.3      9.0      1.1              point_class = utils.majority_vote(neighbors)
+    79       281         78.4      0.3      0.0              classified_vector.append(point_class)
+    80                                           
+    81         1          0.2      0.2      0.0          return classified_vector
+
+Total time: 0.175589 s
+File: /home/gaspare/Desktop/PhD/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance at line 6
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     6                                           @profile
+     7                                           def distance(point1: list[float], point2: list[float]) -> float:
+     8                                               """
+     9                                               Square of the Euclidean distance between two points.
+    10                                               
+    11                                               Args: 
+    12                                                   - point1: (list[float]). List of coordinates of the first point.
+    13                                                   - point2: (list[float]). List of coordinates of the second point.
+    14                                           
+    15                                               Return:
+    16                                                   - float: Square of the Euclidean distance between point1 and point2.
+    17                                               """
+    18                                           
+    19                                               # Check that the two points have the same dimension
+    20     19670       4687.3      0.2      2.7      if len(point1) != len(point2):
+    21                                                   raise ValueError("Points must have the same dimension.")
+    22                                               
+    23     19670     170901.8      8.7     97.3      return sum((a - b) ** 2 for a, b in zip(point1, point2)) 
+
+Total time: 0 s
+File: /home/gaspare/Desktop/PhD/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: distance_numpy at line 25
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    25                                           @profile
+    26                                           def distance_numpy(point1: np.ndarray, point2: np.ndarray) -> np.single:
+    27                                               """
+    28                                               Square of the Euclidean distance between two points implemented in numpy.
+    29                                               
+    30                                               Args: 
+    31                                                   - point1: (np.ndarray). List of coordinates of the first point.
+    32                                                   - point2: (np.ndarray). List of coordinates of the second point.
+    33                                           
+    34                                               Return:
+    35                                                   - float: Square of the Euclidean distance between point1 and point2.
+    36                                               """
+    37                                           
+    38                                               # Check that the two points have the same dimension
+    39                                               if point1.size != point2.size:
+    40                                                   raise ValueError("Points must have the same dimension.")
+    41                                               
+    42                                               return np.sum((point1 - point2)**2)
+
+Total time: 0.00107516 s
+File: /home/gaspare/Desktop/PhD/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: majority_vote at line 44
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    44                                           @profile
+    45                                           def majority_vote(neighbors: list[int]) -> int:
+    46                                               """
+    47                                               Computes the most frequent class label encountered in the list neighbors.
+    48                                           
+    49                                               Args:
+    50                                                   - neighbors (list[int]): List of class labels of the neighbors point.
+    51                                           
+    52                                               Return:
+    53                                                   - int: most frequent class label encountered in the list neighbors
+    54                                               """
+    55                                               # Creating a dictionary
+    56       281         67.5      0.2      6.3      c=dict()
+    57                                           
+    58      1686        262.3      0.2     24.4      for i in neighbors:
+    59      1405        246.5      0.2     22.9          if i in c:
+    60      1019        247.4      0.2     23.0              c[i]+=1
+    61                                                   else:
+    62       386         84.7      0.2      7.9              c[i]=1
+    63                                               
+    64       281        166.9      0.6     15.5      return max(c, key=c.get)
+
+Total time: 0.00470927 s
+File: /home/gaspare/Desktop/PhD/devtools_scicomp_project_2025/src/pyclassify/utils.py
+Function: read_file at line 81
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    81                                           @profile
+    82                                           def read_file(FileName):
+    83         1         39.1     39.1      0.8      FileName = os.path.abspath(FileName)
+    84         1          0.4      0.4      0.0      DataSet_points = []
+    85         1          0.4      0.4      0.0      DataSet_labels = []
+    86                                           
+    87         1         30.1     30.1      0.6      with open(FileName, 'r') as f:
+    88                                           
+    89       352        254.2      0.7      5.4          for line in f:
+    90       351        805.1      2.3     17.1              parsed_argument = line.split(",")
+    91                                           
+    92       351       2993.6      8.5     63.6              point = list(map(float, parsed_argument[:-1]))
+    93                                           
+    94       351        157.2      0.4      3.3              label = parsed_argument[-1].strip()
+    95                                           
+    96       351        135.0      0.4      2.9              label = 1 if label == 'g' or label == '1' else 0
+    97                                           
+    98       351        146.0      0.4      3.1              DataSet_points.append(point)
+    99       351        147.6      0.4      3.1              DataSet_labels.append(label)
+   100                                           
+   101         1          0.5      0.5      0.0      return DataSet_points, DataSet_labels
+
